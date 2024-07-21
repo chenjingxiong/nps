@@ -165,8 +165,11 @@ func (https *HttpsServer) cert(host *file.Host, c net.Conn, rb []byte, certFileU
 
 		/* 这里原来的代码混淆了文件路径和证书内容，现在只能先将就着用。 */
 		if host.UseServerDefaultCert {
+
 			certFile := beego.AppConfig.String("https_default_cert_file")
 			keyFile := beego.AppConfig.String("https_default_key_file")
+			logs.Info("采用服务器本地证书 cert=%s key=%s", certFile, keyFile)
+
 			if common.FileExists(certFile) && common.FileExists(keyFile) {
 				certPEMBlock, err1 := os.ReadFile(certFile)
 				if err1 != nil {
@@ -183,6 +186,8 @@ func (https *HttpsServer) cert(host *file.Host, c net.Conn, rb []byte, certFileU
 					certstr := string(certPEMBlock)
 					keystr := string(keyPEMBlock)
 
+					logs.Info("采用服务器本地证书内容 certstr=%s keystr=%s", certstr, keystr)
+
 					https.NewHttps(l, certstr, keystr)
 
 					https.httpsListenerMap.Store(host.Id, l)
@@ -191,14 +196,14 @@ func (https *HttpsServer) cert(host *file.Host, c net.Conn, rb []byte, certFileU
 				}
 
 			} else {
-				logs.Error("证书文件不存在，请检查配置文件的https_default_cert_file和https_default_cert_file参数")
+				logs.Error("证书文件不存在,请检查配置文件的https_default_cert_file和https_default_cert_file参数")
 			}
+		} else {
+			l = NewHttpsListener(https.listener)
+			https.NewHttps(l, certFileUrl, keyFileUrl)
+			https.httpsListenerMap.Store(certFileUrl, l)
+			https.hostIdCertMap.Store(host.Id, certFileUrl)
 		}
-
-		l = NewHttpsListener(https.listener)
-		https.NewHttps(l, certFileUrl, keyFileUrl)
-		https.httpsListenerMap.Store(certFileUrl, l)
-		https.hostIdCertMap.Store(host.Id, certFileUrl)
 	}
 
 	acceptConn := conn.NewConn(c)
