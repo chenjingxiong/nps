@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"sync"
 
 	"ehang.io/nps/lib/cache"
@@ -11,6 +12,7 @@ import (
 	"ehang.io/nps/lib/conn"
 	"ehang.io/nps/lib/crypt"
 	"ehang.io/nps/lib/file"
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/pkg/errors"
 )
@@ -160,6 +162,39 @@ func (https *HttpsServer) cert(host *file.Host, c net.Conn, rb []byte, certFileU
 		}
 	} else {
 		// 第一次加载证书
+
+		/* 这里原来的代码混淆了文件路径和证书内容，现在只能先将就着用。 */
+		if host.UseServerDefaultCert {
+			certFile := beego.AppConfig.String("https_default_cert_file")
+			keyFile := beego.AppConfig.String("https_default_key_file")
+			if common.FileExists(certFile) && common.FileExists(keyFile) {
+				certPEMBlock, err1 := os.ReadFile(certFile)
+				if err1 != nil {
+					logs.Error(err1)
+				}
+				keyPEMBlock, err2 := os.ReadFile(keyFile)
+				if err2 != nil {
+					logs.Error(err2)
+				}
+
+				if err1 == nil && err2 == nil {
+					l := NewHttpsListener(https.listener)
+					/*NewHttps 和 内部的NewServerWithTls 函数只接受string参数。所以只能再转换一次。因为只是第一次会加载 不会损失效率所以也就将就吧*/
+					certstr := string(certPEMBlock)
+					keystr := string(keyPEMBlock)
+
+					https.NewHttps(l, certstr, keystr)
+
+					https.httpsListenerMap.Store(host.Id, l)
+					https.httpsListenerMap.Store(certstr, l)
+
+				}
+
+			} else {
+				logs.Error("证书文件不存在，请检查配置文件的https_default_cert_file和https_default_cert_file参数")
+			}
+		}
+
 		l = NewHttpsListener(https.listener)
 		https.NewHttps(l, certFileUrl, keyFileUrl)
 		https.httpsListenerMap.Store(certFileUrl, l)
