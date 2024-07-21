@@ -45,11 +45,11 @@ func (https *HttpsServer) Start() error {
 			logs.Debug("the url %s can't be parsed!,remote addr %s", serverName, c.RemoteAddr().String())
 			return
 		} else {
-			if host.CertFilePath == "" || host.KeyFilePath == "" {
+			if host.CertFilePath == "" || host.KeyFilePath == "" && !host.UseServerDefaultCert {
 				logs.Debug("加载客户端本地证书")
 				https.handleHttps2(c, serverName, rb, r)
 			} else {
-				logs.Debug("使用上传证书")
+				logs.Debug("使用页面上传的证书 或 服务器默认的证书 ")
 				https.cert(host, c, rb, host.CertFilePath, host.KeyFilePath)
 			}
 		}
