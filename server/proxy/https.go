@@ -45,7 +45,7 @@ func (https *HttpsServer) Start() error {
 			logs.Debug("the url %s can't be parsed!,remote addr %s", serverName, c.RemoteAddr().String())
 			return
 		} else {
-			if host.CertFilePath == "" || host.KeyFilePath == "" && !host.UseServerDefaultCert {
+			if (host.CertFilePath == "" || host.KeyFilePath == "") && !host.UseServerDefaultCert {
 				logs.Debug("加载客户端本地证书")
 				https.handleHttps2(c, serverName, rb, r)
 			} else {
