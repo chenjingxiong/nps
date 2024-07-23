@@ -192,11 +192,14 @@ func (https *HttpsServer) cert(host *file.Host, c net.Conn, rb []byte, certFileU
 
 					https.httpsListenerMap.Store(host.Id, l)
 					https.httpsListenerMap.Store(certstr, l)
+					logs.Info(" 创建了链接 %s keystr=%s", certstr, keystr)
 
 				}
 
 			} else {
 				logs.Error("证书文件不存在,请检查配置文件的https_default_cert_file和https_default_cert_file参数")
+				return
+
 			}
 		} else {
 			l = NewHttpsListener(https.listener)
@@ -209,6 +212,8 @@ func (https *HttpsServer) cert(host *file.Host, c net.Conn, rb []byte, certFileU
 	acceptConn := conn.NewConn(c)
 	acceptConn.Rb = rb
 	l.acceptConn <- acceptConn
+	logs.Info(" 创建了链接  acceptConn")
+
 }
 
 // handle the https which is just proxy to other client
