@@ -181,18 +181,19 @@ func (https *HttpsServer) cert(host *file.Host, c net.Conn, rb []byte, certFileU
 				}
 
 				if err1 == nil && err2 == nil {
-					l := NewHttpsListener(https.listener)
+					l = NewHttpsListener(https.listener) //全局变量
 					/*NewHttps 和 内部的NewServerWithTls 函数只接受string参数。所以只能再转换一次。因为只是第一次会加载 不会损失效率所以也就将就吧*/
 					certstr := string(certPEMBlock)
 					keystr := string(keyPEMBlock)
 
-					logs.Info("采用服务器本地证书内容 certstr=%s keystr=%s", certstr, keystr)
+					//logs.Info("采用服务器本地证书内容 certstr=%s keystr=%s", certstr, keystr)
 
 					https.NewHttps(l, certstr, keystr)
 
-					https.httpsListenerMap.Store(host.Id, l)
+					https.hostIdCertMap.Store(host.Id, l)
 					https.httpsListenerMap.Store(certstr, l)
-					logs.Info(" 创建了链接 %s keystr=%s", certstr, keystr)
+					//logs.Info(" 创建了链接 \n")
+					//logs.Info(" 创建了链接 %s keystr=%s", certstr, keystr)
 
 				}
 
