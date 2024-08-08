@@ -161,45 +161,57 @@ func (https *HttpsServer) cert(host *file.Host, c net.Conn, rb []byte, certFileU
 			https.hostIdCertMap.Store(host.Id, certFileUrl)
 		}
 	} else {
+
 		// 第一次加载证书
 
 		/* 这里原来的代码混淆了文件路径和证书内容，现在只能先将就着用。 */
 		if host.UseServerDefaultCert {
 
-			certFile := beego.AppConfig.String("https_default_cert_file")
-			keyFile := beego.AppConfig.String("https_default_key_file")
-			logs.Info("采用服务器本地证书 cert=%s key=%s", certFile, keyFile)
-
-			if common.FileExists(certFile) && common.FileExists(keyFile) {
-				certPEMBlock, err1 := os.ReadFile(certFile)
-				if err1 != nil {
-					logs.Error(err1)
-				}
-				keyPEMBlock, err2 := os.ReadFile(keyFile)
-				if err2 != nil {
-					logs.Error(err2)
-				}
-
-				if err1 == nil && err2 == nil {
-					l = NewHttpsListener(https.listener) //全局变量
-					/*NewHttps 和 内部的NewServerWithTls 函数只接受string参数。所以只能再转换一次。因为只是第一次会加载 不会损失效率所以也就将就吧*/
-					certstr := string(certPEMBlock)
-					keystr := string(keyPEMBlock)
-
-					//logs.Info("采用服务器本地证书内容 certstr=%s keystr=%s", certstr, keystr)
-
-					https.NewHttps(l, certstr, keystr)
-
-					https.hostIdCertMap.Store(host.Id, l)
-					https.httpsListenerMap.Store(certstr, l)
-					//logs.Info(" 创建了链接 \n")
-					//logs.Info(" 创建了链接 %s keystr=%s", certstr, keystr)
-
+			if cert1, ok := https.hostIdCertMap.Load("default"); ok {
+				if v, ok := https.httpsListenerMap.Load("default"); ok {
+					l = v.(*HttpsListener)
 				}
 
 			} else {
-				logs.Error("证书文件不存在,请检查配置文件的https_default_cert_file和https_default_cert_file参数")
-				return
+
+				certFile := beego.AppConfig.String("https_default_cert_file")
+				keyFile := beego.AppConfig.String("https_default_key_file")
+				logs.Info("采用服务器本地证书 cert=%s key=%s", certFile, keyFile)
+
+				if common.FileExists(certFile) && common.FileExists(keyFile) {
+					certPEMBlock, err1 := os.ReadFile(certFile)
+					if err1 != nil {
+						logs.Error(err1)
+					}
+					keyPEMBlock, err2 := os.ReadFile(keyFile)
+					if err2 != nil {
+						logs.Error(err2)
+					}
+
+					if err1 == nil && err2 == nil {
+						l = NewHttpsListener(https.listener) //全局变量
+						/*NewHttps 和 内部的NewServerWithTls 函数只接受string参数。所以只能再转换一次。因为只是第一次会加载 不会损失效率所以也就将就吧*/
+						certstr := string(certPEMBlock)
+						keystr := string(keyPEMBlock)
+
+						//logs.Info("采用服务器本地证书内容 certstr=%s keystr=%s", certstr, keystr)
+
+						https.NewHttps(l, certstr, keystr)
+
+						https.hostIdCertMap.Store(host.Id, l)
+						https.httpsListenerMap.Store(certstr, l)
+
+						https.hostIdCertMap.Store("default", l)
+						https.httpsListenerMap.Store("default", l)
+
+						//logs.Info(" 创建了链接 \n")
+						//logs.Info(" 创建了链接 %s keystr=%s", certstr, keystr)
+
+					}
+				} else {
+					logs.Error("证书文件不存在,请检查配置文件的https_default_cert_file和https_default_cert_file参数")
+					return
+				}
 
 			}
 		} else {
