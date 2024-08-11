@@ -80,7 +80,7 @@ CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w -extldflags -sta
 tar -czvf darwin_arm64_client.tar.gz npc conf/npc.conf conf/multi_account.conf
 
 
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -extldflags -static -extldflags -static" ./cmd/nps/nps.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags " -extldflags -static -extldflags -static" ./cmd/nps/nps.go
 tar -czvf linux_amd64_server.tar.gz conf/nps.conf conf/tasks.json conf/clients.json conf/hosts.json conf/server.key  conf/server.pem web/views web/static nps
 
 

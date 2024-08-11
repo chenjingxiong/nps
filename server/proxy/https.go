@@ -168,6 +168,7 @@ func (https *HttpsServer) cert(host *file.Host, c net.Conn, rb []byte, certFileU
 		if host.UseServerDefaultCert {
 
 			if cert1, ok := https.hostIdCertMap.Load("default"); ok {
+				_ = cert1
 				if v, ok := https.httpsListenerMap.Load("default"); ok {
 					l = v.(*HttpsListener)
 				}
